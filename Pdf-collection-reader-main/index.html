@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Niki's Open Source</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        #searchBar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        #searchInput {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        #typeFilter {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #searchResults {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .media-link {
+            color: #4CAF50;
+            text-decoration: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .media-link:hover {
+            text-decoration: underline;
+        }
+        .previewIcon {
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        #mediaViewer {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+        #pdfViewer, #videoViewer {
+            width: 100%;
+            height: 0;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+            flex-grow: 1;
+        }
+        #videoViewer {
+            display: none;
+        }
+        #toggleButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #toggleButton:hover {
+            background-color: #45a049;
+        }
+        #searchResults p {
+            text-align: center;
+            color: #999;
+        }
+        .previewLayer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        .previewContent {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow: auto;
+        }
+        .previewClose {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .Follow{
+
+    display: flex;
+    font-size: 16px;
+    text-decoration: none;
+    font-weight: 600;
+    align-items: center;
+    justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search and Open PDFs and Videos</h1>
+    <div id="searchBar">
+        <input type="text" id="searchInput" placeholder="Search for a PDF or Video..." onkeyup="searchMedia()">
+        <select id="typeFilter" onchange="searchMedia()">
+            <option value="all">All</option>
+            <option value="video">Video</option>
+            <option value="mp4">MP4</option>
+        </select>
+    </div>
+    <button id="toggleButton" onclick="toggleSearchResults()">Hide List</button>
+    <div id="searchResults" class="fade"></div>
+    <div id="mediaViewer">
+        <iframe id="pdfViewer" src=""></iframe>
+        <video id="videoViewer" controls>
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    <div id="previewLayer" class="previewLayer" onmouseleave="closePreview()">
+        <div class="previewContent" id="previewContent"></div>
+        <button class="previewClose" onclick="closePreview()">&times;</button>
+    </div>
+
+    <script>
+        const media = [
+            //This is strucheared data data embaded in folder            
+            { name: 'Video Tutorial', url: 'https://nikhil-techefficio.github.io/Pdf-collection-reader/v5.mp4', type: 'video' },
+            { name: 'Mantralayam', url: 'https://nikhil-techefficio.github.io/Pdf-collection-reader/videoplayback.m4a', type: 'mp4' },
+            { name: 'NaaMadhi', url: 'https://nikhil-techefficio.github.io/Pdf-collection-reader/Naa%20Madhi.m4a', type: 'mp4' },
+            // Add more media items as needed      The Ultimate MongoDb Cheatsheet !     
+];
+
+        let isListVisible = true;
+
+        function searchMedia() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const filter = document.getElementById('typeFilter').value;
+            const results = media.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(input);
+                const matchesFilter = filter === 'all' || item.type === filter;
+                return matchesSearch && matchesFilter;
+            });
+            displayResults(results);
+        }
+
+        function displayResults(results) {
+            const searchResults = document.getElementById('searchResults');
+            searchResults.innerHTML = '';
+            
+            if (results.length > 0) {
+                const table = document.createElement('table');
+                const header = table.createTHead();
+                const headerRow = header.insertRow(0);
+                const nameHeader = document.createElement('th');
+                nameHeader.innerHTML = 'Name';
+                const typeHeader = document.createElement('th');
+                typeHeader.innerHTML = 'Type';
+                headerRow.appendChild(nameHeader);
+                headerRow.appendChild(typeHeader);
+
+                const body = table.createTBody();
+                results.forEach(item => {
+                    const row = body.insertRow();
+                    const nameCell = row.insertCell(0);
+                    const typeCell = row.insertCell(1);
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.textContent = item.name;
+                    link.className = 'media-link';
+                    link.onclick = (event) => {
+                        event.preventDefault(); // Prevents following the link
+                        handleClick(item.url, item.type);
+                    };
+                    nameCell.appendChild(link);
+                    typeCell.textContent = item.type.toUpperCase();
+
+                    const previewIcon = document.createElement('span');
+                    previewIcon.className = 'previewIcon';
+                    previewIcon.innerHTML = '&#128065;'; // Eye icon
+                    previewIcon.onclick = (event) => {
+                        event.stopPropagation(); // Prevents bubbling to the link
+                        previewMedia(item.url, item.type);
+                    };
+                    link.appendChild(previewIcon);
+
+                    row.classList.add('media-item');
+                });
+
+                searchResults.appendChild(table);
+            } else {
+                searchResults.innerHTML = '<p>No results found.</p>';
+            }
+        }
+
+        function handleClick(url, type) {
+            if (type === 'pdf') {
+                openPDF(url);
+            } else if (type === 'video' || type === 'mp4') {
+                openVideo(url);
+            }
+        }
+
+        function openPDF(url) {
+            const pdfViewer = document.getElementById('pdfViewer');
+            const videoViewer = document.getElementById('videoViewer');
+            pdfViewer.style.display = 'block';
+            videoViewer.style.display = 'none';
+            pdfViewer.style.height = '600px'; // Reset height for PDF
+            pdfViewer.src = url;
+            hideSearchResults();
+        }
+
+        function openVideo(url) {
+            const pdfViewer = document.getElementById('pdfViewer');
+            const videoViewer = document.getElementById('videoViewer');
+            pdfViewer.style.display = 'none';
+            videoViewer.style.display = 'block';
+            videoViewer.style.height = '600px'; // Reset height for video
+            videoViewer.src = url;
+            hideSearchResults();
+        }
+
+        function toggleSearchResults() {
+            const searchResults = document.getElementById('searchResults');
+            const toggleButton = document.getElementById('toggleButton');
+            if (isListVisible) {
+                searchResults.style.display = 'none';
+                toggleButton.textContent = 'Show List';
+            } else {
+                searchResults.style.display = 'block';
+                toggleButton.textContent = 'Hide List';
+            }
+            isListVisible = !isListVisible;
+        }
+
+        function hideSearchResults() {
+            const searchResults = document.getElementById('searchResults');
+            const toggleButton = document.getElementById('toggleButton');
+            searchResults.style.display = 'none';
+            toggleButton.textContent = 'Show List';
+            isListVisible = false;
+        }
+
+        function previewMedia(url, type) {
+            const previewLayer = document.getElementById('previewLayer');
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = '';
+            if (type === 'pdf') {
+                const iframe = document.createElement('iframe');
+                iframe.src = url;
+                iframe.style.width = '100%';
+                iframe.style.height = '400px';
+                previewContent.appendChild(iframe);
+            } else if (type === 'video' || type === 'mp4') {
+                const video = document.createElement('video');
+                video.src = url;
+                video.controls = true;
+                video.style.width = '100%';
+                previewContent.appendChild(video);
+            }
+            previewLayer.style.display = 'flex';
+            previewLayer.classList.add('fade');
+        }
+
+        function closePreview() {
+            const previewLayer = document.getElementById('previewLayer');
+            previewLayer.classList.remove('fade');
+            setTimeout(() => {
+                previewLayer.style.display = 'none';
+            }, 300); // Delay closing to allow fade-out animation
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            displayResults(media);
+        });
+    </script>
+    
+    <a href="https://www.linkedin.com/in/nikhil-singh-softwaredeveloper/" class="Follow">Follow Niki!</a>
+</body>
+</html>
