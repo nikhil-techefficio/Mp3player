@@ -155,7 +155,7 @@
     </style>
 </head>
 <body>
-    <h1>Search and Open PDFs and Videos</h1>
+    <h1>Search for the MP3</h1>
     <div id="searchBar">
         <input type="text" id="searchInput" placeholder="Search for a PDF or Video..." onkeyup="searchMedia()">
         <select id="typeFilter" onchange="searchMedia()">
@@ -189,11 +189,21 @@
             { name: 'Mantrala44', url: 'https://nikhil-techefficio.github.io/Mp3player/videoplayback.m4a (3)', type: 'mp4' },
             { name: 'Govinda Namalu', url: 'https://nikhil-techefficio.github.io/Mp3player/Govinda%Namalu', type: 'mp3' },
             { name: 'Annamayya', url: 'https://nikhil-techefficio.github.io/Mp3player/Annamayya', type: 'mp3' },
-            { name: 'Sri Ramadasu', url: 'https://nikhil-techefficio.github.io/Mp3player/Sri%Ramadasu', type: 'mp3' },
+            { name: 'Sri Ramadasu', url: 'https://nikhil-techefficio.github.io/Mp3player/Sri%Ramadasu.mp3', type: 'mp3' },
             // Add more media items as needed      The Ultimate MongoDb Cheatsheet !    Sri Ramadasu
+            { name: 'Agnipath', url: 'https://nikhil-techefficio.github.io/Mp3player/Mus/Agneepath%20(2012)%20(320%20Kbps)@IndMusic/Agneepath%20(2012)/03%20-%20Gun%20Gun%20Guna.mp3', type: 'mp3' },
+            { name: 'Agnipath', url: 'https://nikhil-techefficio.github.io/Mp3player/Mus/Agneepath%20(2012)%20(320%20Kbps)@IndMusic/Agneepath%20(2012)/01 - Chikni Chameli.mp3', type: 'mp3' },
+            { name: 'Agnipath', url: 'https://nikhil-techefficio.github.io/Mp3player/Mus/Agneepath%20(2012)%20(320%20Kbps)@IndMusic/Agneepath%20(2012)/02 - O Saiyyan.mp3.mp3', type: 'mp3' },
+            { name: 'Agnipath', url: 'https://nikhil-techefficio.github.io/Mp3player/Mus/Agneepath%20(2012)%20(320%20Kbps)@IndMusic/Agneepath%20(2012)/04 - Shah Ka Rutba.mp3', type: 'mp3' },
+            { name: 'Agnipath', url: 'https://nikhil-techefficio.github.io/Mp3player/Mus/Agneepath%20(2012)%20(320%20Kbps)@IndMusic/Agneepath%20(2012)/05 - Abhi Mujh Mein Kahin.mp3', type: 'mp3' },
+            { name: 'Agnipath', url: 'https://nikhil-techefficio.github.io/Mp3player/Mus/Agneepath%20(2012)%20(320%20Kbps)@IndMusic/Agneepath%20(2012)/06 - Deva Shree Ganesha.mp3', type: 'mp3' },
+
+            { name: 'Kai po cha', url: 'https://nikhil-techefficio.github.io/Mp3player/Mus/Kai%20Po%20Che%20(2013)%20Mp3%20Songs%5BSongsMp3.Co/Manja.mp3', type: 'mp3' },
+            { name: 'Kai po cha', url: 'https://nikhil-techefficio.github.io/Mp3player/Mus/Kai%20Po%20Che%20(2013)%20Mp3%20Songs%5BSongsMp3.Co/Meethi-Boliyaan.mp3', type: 'mp3' },
+            { name: 'Kai po cha', url: 'https://nikhil-techefficio.github.io/Mp3player/Mus/Kai%20Po%20Che%20(2013)%20Mp3%20Songs%5BSongsMp3.Co/Shubhaarumbh.mp3', type: 'mp3' },
 ];
 
-        let isListVisible = true;
+        let isListVisible = true;  //Mus/Kai%20Po%20Che%20(2013)%20Mp3%20Songs%5BSongsMp3.Co
 
         function searchMedia() {
             const input = document.getElementById('searchInput').value.toLowerCase();
