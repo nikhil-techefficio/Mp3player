@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JSON File Editor</title>
+</head>
+<body>
+  <h1>JSON File Editor</h1>
+  <textarea id="jsonEditor" rows="10" cols="50"></textarea><br>
+  <button onclick="loadJSON()">Load JSON</button>
+  <button onclick="saveJSON()">Save JSON</button>
+
+  <script>
+    function loadJSON() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+
+      input.onchange = (event) => {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+          const jsonText = event.target.result;
+          try {
+            const jsonData = JSON.parse(jsonText);
+            document.getElementById('jsonEditor').value = JSON.stringify(jsonData, null, 2); // Pretty-print JSON
+          } catch (error) {
+            alert('Error parsing JSON file: ' + error);
+          }
+        };
+
+        reader.readAsText(file);
+      };
+
+      input.click();
+    }
+
+    function saveJSON() {
+      const jsonText = document.getElementById('jsonEditor').value;
+
+      try {
+        const jsonData = JSON.parse(jsonText);
+        const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'edited.json';
+        link.click();
+
+        URL.revokeObjectURL(url); 
+      } catch (error) {
+        alert('Error saving JSON file: ' + error);
+      }
+    }
+  </script>
+</body>
+</html>
