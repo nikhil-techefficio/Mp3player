@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      text-align: center;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 600px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input[type="file"] {
+      margin-bottom: 20px;
+    }
+
+    .output {
+      text-align: left;
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 10px;
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>File Viewer</h1>
+    <input type="file" id="fileInput" multiple>
+    <div id="output" class="output"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+  <script>
+    document.getElementById('fileInput').addEventListener('change', async (event) => {
+      const files = event.target.files;
+      const outputDiv = document.getElementById('output');
+      outputDiv.innerHTML = ''; // Clear previous output
+
+      for (const file of files) {
+        const fileType = file.type;
+
+        if (fileType === 'text/plain') {
+          // Handle text files
+          const text = await file.text();
+          outputDiv.innerHTML += `<h3>${file.name}</h3><pre>${text}</pre>`;
+        } else if (fileType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+          // Handle Excel files
+          const arrayBuffer = await file.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+          workbook.SheetNames.forEach((sheetName) => {
+            const sheet = XLSX.utils.sheet_to_html(workbook.Sheets[sheetName]);
+            outputDiv.innerHTML += `<h3>${file.name} - Sheet: ${sheetName}</h3>${sheet}`;
+          });
+        } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+          // Handle Word files
+          const arrayBuffer = await file.arrayBuffer();
+          const options = { includeDefaultStyleMap: true };
+          const result = await mammoth.extractRawText({ arrayBuffer }, options);
+          outputDiv.innerHTML += `<h3>${file.name}</h3><pre>${result.value}</pre>`;
+        } else {
+          outputDiv.innerHTML += `<h3>${file.name}</h3><p>Unsupported file type</p>`;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
