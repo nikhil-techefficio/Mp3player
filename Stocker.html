@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Stock Prices</title>
+<style>
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+  border: 1px solid #ddd;
+}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th {
+  background-color: #4CAF50;
+  color: white;
+}
+</style>
+</head>
+<body>
+
+<h2>Stock Prices</h2>
+
+<table id="stockTable">
+  <tr>
+    <th>Company</th>
+    <th>Price</th>
+  </tr>
+</table>
+
+<script>
+const stocks = [
+  "ZOMATOEQN",
+  "SUZLONEQN",
+  "WIPROEQN",
+  "LTHOTELEQN",
+  "MUKKAPROEQN",
+  "NTPCGREENEQN",
+  "IRFCEQN",
+  "IOCEQN",
+  "BATAINDIAEQN",
+  "EQUITASEQN",
+  "NHPCEQN",
+  "CPSEETFEQN",
+  "ALSTONEQN",
+  "UCOBANKEQN",
+  "NTPCEQN", 
+  "CANBKEQN",
+  "CDSLEQN",
+  "CASTROLEQN",
+  "IRBEQN",
+  "IFCIEQN",
+  "EASEMYTRIPEQN",
+  "EXIDEINDEQN"
+];
+
+const table = document.getElementById("stockTable");
+
+function getStockPrice(symbol) {
+  const url = `https://www.nseindia.com/api/chart-databyindex-dynamic?index=${symbol}&type=symbol`;
+//https://www.nseindia.com/api/chart-databyindex-dynamic?index=NMDCEQN&type=symbol
+  fetch(url)
+    .then(response => response.text())
+    .then(data => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(data, 'text/html');
+      const priceElement = doc.querySelector('.My(6px) Fw(b) D(ib) Mend(8px)').textContent;
+      return priceElement;
+    })
+    .then(price => {
+      const newRow = table.insertRow();
+      const cell1 = newRow.insertCell(0);
+      const cell2 = newRow.insertCell(1);
+      cell1.textContent = symbol.replace(".NS", "");
+      cell2.textContent = price;
+    })
+    .catch(error => {
+      console.error(`Error fetching data for ${symbol}:`, error);
+      const newRow = table.insertRow();
+      const cell1 = newRow.insertCell(0);
+      const cell2 = newRow.insertCell(1);
+      cell1.textContent = symbol.replace(".NS", "");
+      cell2.textContent = "N/A"; 
+    });
+}
+
+stocks.forEach(stock => {
+  getStockPrice(stock);
+});
+</script>
+
+</body>
+</html>
