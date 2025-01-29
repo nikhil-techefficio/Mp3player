@@ -51,11 +51,17 @@ th {
   border: 1px solid #ccc;
   cursor: pointer;
 }
+
+.summary {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 20px;
+}
 </style>
 </head>
 <body>
 
-<h2>Stock Prices</h2>
+<h2>Stock Portfolio</h2>
 <button id="refreshButton" class="refresh-button">Refresh Prices</button>
 <button onclick="window.print()" class="refresh-button">Print</button>
 <div id="statusMessage"></div>
@@ -66,13 +72,22 @@ th {
     <th>Price</th>
     <th>Purchased At</th>
     <th>Volume Purchased</th>
+    <th>Invested Amount</th>
+    <th>Current Amount</th>
+    <th>Profit/Loss</th>
     <th>Volume</th>
     <th>Last Updated</th>
   </tr>
 </table>
 
+<div class="summary">
+  Total Invested: ₹<span id="totalInvested">0</span> | 
+  Total Current Value: ₹<span id="totalCurrent">0</span> | 
+  Overall Profit/Loss: ₹<span id="totalProfitLoss">0</span>
+</div>
+
 <script>
-const stocks = [
+const stocks =  [
     { "Name": "ZOMATO.NS", "Purchased": "173", "Volume": "70" },
     { "Name": "SUZLON.NS", "Purchased": "173", "Volume": "70" },
     { "Name": "WIPRO.NS", "Purchased": "173", "Volume": "70" },
@@ -125,54 +140,65 @@ function clearTable() {
     }
 }
 
+function updateSummary() {
+    let totalInvested = 0;
+    let totalCurrent = 0;
+    
+    document.querySelectorAll("#stockTable tr").forEach((row, index) => {
+        if (index === 0) return;
+
+        let purchasedAt = parseFloat(row.cells[2].textContent) || 0;
+        let volume = parseFloat(row.cells[3].textContent) || 0;
+        let currentPrice = parseFloat(row.cells[1].textContent.replace("₹", "")) || 0;
+
+        let investedAmount = purchasedAt * volume;
+        let currentAmount = currentPrice * volume;
+        let profitLoss = currentAmount - investedAmount;
+
+        totalInvested += investedAmount;
+        totalCurrent += currentAmount;
+
+        row.cells[4].textContent = `₹${formatNumber(investedAmount)}`;
+        row.cells[5].textContent = `₹${formatNumber(currentAmount)}`;
+        row.cells[6].textContent = `₹${formatNumber(profitLoss)}`;
+        row.cells[6].style.color = profitLoss >= 0 ? "green" : "red";
+    });
+
+    document.getElementById("totalInvested").textContent = formatNumber(totalInvested);
+    document.getElementById("totalCurrent").textContent = formatNumber(totalCurrent);
+    document.getElementById("totalProfitLoss").textContent = formatNumber(totalCurrent - totalInvested);
+}
+
 function makeCellEditable(cell) {
     cell.contentEditable = "true";
     cell.classList.add("editable");
+    cell.addEventListener("input", updateSummary);
 }
 
 function addRowToTable(stock, data, isError = false) {
     const table = document.getElementById("stockTable");
     const newRow = table.insertRow();
     
-    // Symbol
-    const cell1 = newRow.insertCell(0);
-    cell1.textContent = stock.Name.split('.')[0];
+    newRow.insertCell(0).textContent = stock.Name.split('.')[0];
 
-    if (!isError && data) {
-        // Price
-        const cell2 = newRow.insertCell(1);
-        cell2.textContent = `₹${parseFloat(data.price).toFixed(2)}`;
+    const priceCell = newRow.insertCell(1);
+    priceCell.textContent = !isError && data ? `₹${parseFloat(data.price).toFixed(2)}` : "N/A";
 
-        // Purchased At (Editable)
-        const cell3 = newRow.insertCell(2);
-        cell3.textContent = stock.Purchased || "Enter Price";
-        makeCellEditable(cell3);
+    const purchasedCell = newRow.insertCell(2);
+    purchasedCell.textContent = stock.Purchased || "Enter Price";
+    makeCellEditable(purchasedCell);
 
-        // Volume Purchased (Editable)
-        const cell4 = newRow.insertCell(3);
-        cell4.textContent = stock.Volume || "Enter Volume";
-        makeCellEditable(cell4);
+    const volumeCell = newRow.insertCell(3);
+    volumeCell.textContent = stock.Volume || "Enter Volume";
+    makeCellEditable(volumeCell);
 
-        // Volume
-        const cell5 = newRow.insertCell(4);
-        cell5.textContent = formatNumber(data.volume);
-    } else {
-        const cell2 = newRow.insertCell(1);
-        const cell3 = newRow.insertCell(2);
-        const cell4 = newRow.insertCell(3);
-        const cell5 = newRow.insertCell(4);
-        cell2.textContent = 'N/A';
-        cell3.textContent = stock.Purchased || 'Enter Price';
-        cell4.textContent = stock.Volume || 'Enter Volume';
-        cell5.textContent = 'N/A';
-        cell2.className = 'error-text';
-        makeCellEditable(cell3);
-        makeCellEditable(cell4);
-    }
-    
-    // Last Updated
-    const cell6 = newRow.insertCell(5);
-    cell6.textContent = formatDateTime(new Date());
+    newRow.insertCell(4).textContent = "₹0"; // Invested Amount
+    newRow.insertCell(5).textContent = "₹0"; // Current Amount
+    newRow.insertCell(6).textContent = "₹0"; // Profit/Loss
+
+    newRow.insertCell(7).textContent = !isError && data ? formatNumber(data.volume) : "N/A";
+
+    newRow.insertCell(8).textContent = formatDateTime(new Date());
 }
 
 async function fetchStockPrice(symbol) {
@@ -180,53 +206,27 @@ async function fetchStockPrice(symbol) {
     
     try {
         const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
         const data = await response.json();
-        
-        if (data.chart.result && data.chart.result[0]) {
-            const quote = data.chart.result[0].meta;
-            
-            return {
-                price: quote.regularMarketPrice,
-                volume: quote.regularMarketVolume,
-                success: true
-            };
-        } else {
-            throw new Error('Invalid API response');
-        }
-        
+        const quote = data.chart.result[0].meta;
+
+        return { price: quote.regularMarketPrice, volume: quote.regularMarketVolume, success: true };
     } catch (error) {
-        console.error(`Error fetching data for ${symbol}:`, error.message);
-        return { success: false, error: error.message };
+        return { success: false };
     }
 }
 
 async function fetchAllStocks() {
     updateStatusMessage('Fetching stock prices...');
     clearTable();
-    
-    let successCount = 0;
-    let failureCount = 0;
-    
+
     for (const stock of stocks) {
-        try {
-            const result = await fetchStockPrice(stock.Name);
-            addRowToTable(stock, result.success ? result : null, !result.success);
-            result.success ? successCount++ : failureCount++;
-            await new Promise(resolve => setTimeout(resolve, CONFIG.RATE_LIMIT_DELAY));
-        } catch (error) {
-            failureCount++;
-        }
+        const result = await fetchStockPrice(stock.Name);
+        addRowToTable(stock, result.success ? result : null, !result.success);
     }
-    
-    updateStatusMessage(
-        `Completed: ${successCount} successful, ${failureCount} failed`,
-        failureCount > 0
-    );
+
+    updateSummary();
 }
 
 document.getElementById('refreshButton').addEventListener('click', fetchAllStocks);
