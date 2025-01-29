@@ -15,7 +15,7 @@ th, td {
   border: 1px solid #ddd;
 }
 
-tr:nth-child(even){background-color: #f2f2f2}
+tr:nth-child(even) { background-color: #f2f2f2; }
 
 th {
   background-color: #4CAF50;
@@ -23,14 +23,6 @@ th {
 }
 
 .error-text {
-  color: red;
-}
-
-.price-up {
-  color: green;
-}
-
-.price-down {
   color: red;
 }
 
@@ -53,20 +45,27 @@ th {
 .refresh-button:hover {
   background-color: #45a049;
 }
+
+.editable {
+  background-color: #ffffe0;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
 </style>
 </head>
 <body>
 
 <h2>Stock Prices</h2>
 <button id="refreshButton" class="refresh-button">Refresh Prices</button>
-<button onclick="window.print()" class="refresh-button">Prints</button>
+<button onclick="window.print()" class="refresh-button">Print</button>
 <div id="statusMessage"></div>
 
 <table id="stockTable">
   <tr>
     <th>Symbol</th>
     <th>Price</th>
-    <th>Change</th>
+    <th>Purchased At</th>
+    <th>Volume Purchased</th>
     <th>Volume</th>
     <th>Last Updated</th>
   </tr>
@@ -74,29 +73,28 @@ th {
 
 <script>
 const stocks = [
-    "ZOMATO.NS",  
-"SUZLON.NS",  
-"WIPRO.NS",  
- "EXIDEIND.NS", 
- "IFCI.NS",
-"MUKKA.NS",  
-"NTPCGREEN.NS",  
-"IRFC.NS",  
-"IOC.NS",  
-"BATAINDIA.NS",  
-"EASEMYTRIP.NS", 
-"EQUITASBNK.NS",
-"NHPC.NS",  
-"CPSEETF.NS",  
-"ALSTONE.BO",  
-"UCOBANK.NS",  
-"NTPC.NS",  
-"CANBK.NS",  
-"CDSL.NS",  
-"LEMONTREE.NS" ,
-"CASTROLIND.NS",
-"IRB.NS"
-
+    { "Name": "ZOMATO.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "SUZLON.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "WIPRO.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "EXIDEIND.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "IFCI.NS","Purchased": "173", "Volume": "70" },
+    { "Name": "MUKKA.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "NTPCGREEN.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "IRFC.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "IOC.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "BATAINDIA.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "EASEMYTRIP.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "EQUITASBNK.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "NHPC.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "CPSEETF.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "ALSTONE.BO", "Purchased": "173", "Volume": "70" },
+    { "Name": "UCOBANK.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "NTPC.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "CANBK.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "CDSL.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "LEMONTREE.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "CASTROLIND.NS", "Purchased": "173", "Volume": "70" },
+    { "Name": "IRB.NS", "Purchased": "173", "Volume": "70" }
 ];
 
 const CONFIG = {
@@ -127,45 +125,57 @@ function clearTable() {
     }
 }
 
-function addRowToTable(symbol, data, isError = false) {
+function makeCellEditable(cell) {
+    cell.contentEditable = "true";
+    cell.classList.add("editable");
+}
+
+function addRowToTable(stock, data, isError = false) {
     const table = document.getElementById("stockTable");
     const newRow = table.insertRow();
     
     // Symbol
     const cell1 = newRow.insertCell(0);
-    cell1.textContent = symbol.split('.')[0];
-    
+    cell1.textContent = stock.Name.split('.')[0];
+
     if (!isError && data) {
         // Price
         const cell2 = newRow.insertCell(1);
         cell2.textContent = `₹${parseFloat(data.price).toFixed(2)}`;
-        
-        // Change
+
+        // Purchased At (Editable)
         const cell3 = newRow.insertCell(2);
-        const changePercent = parseFloat(data.changePercent);
-        cell3.textContent = `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`;
-        cell3.className = changePercent >= 0 ? 'price-up' : 'price-down';
-        
-        // Volume
+        cell3.textContent = stock.Purchased || "Enter Price";
+        makeCellEditable(cell3);
+
+        // Volume Purchased (Editable)
         const cell4 = newRow.insertCell(3);
-        cell4.textContent = formatNumber(data.volume);
+        cell4.textContent = stock.Volume || "Enter Volume";
+        makeCellEditable(cell4);
+
+        // Volume
+        const cell5 = newRow.insertCell(4);
+        cell5.textContent = formatNumber(data.volume);
     } else {
         const cell2 = newRow.insertCell(1);
         const cell3 = newRow.insertCell(2);
         const cell4 = newRow.insertCell(3);
+        const cell5 = newRow.insertCell(4);
         cell2.textContent = 'N/A';
-        cell3.textContent = 'N/A';
-        cell4.textContent = 'N/A';
+        cell3.textContent = stock.Purchased || 'Enter Price';
+        cell4.textContent = stock.Volume || 'Enter Volume';
+        cell5.textContent = 'N/A';
         cell2.className = 'error-text';
+        makeCellEditable(cell3);
+        makeCellEditable(cell4);
     }
     
     // Last Updated
-    const cell5 = newRow.insertCell(4);
-    cell5.textContent = formatDateTime(new Date());
+    const cell6 = newRow.insertCell(5);
+    cell6.textContent = formatDateTime(new Date());
 }
 
 async function fetchStockPrice(symbol) {
-    // Using Yahoo Finance API
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
     
     try {
@@ -179,11 +189,9 @@ async function fetchStockPrice(symbol) {
         
         if (data.chart.result && data.chart.result[0]) {
             const quote = data.chart.result[0].meta;
-            const indicators = data.chart.result[0].indicators.quote[0];
             
             return {
                 price: quote.regularMarketPrice,
-                changePercent: quote.regularMarketChangePercent,
                 volume: quote.regularMarketVolume,
                 success: true
             };
@@ -197,28 +205,6 @@ async function fetchStockPrice(symbol) {
     }
 }
 
-async function getStockPriceWithRetry(symbol) {
-    for (let attempt = 1; attempt <= CONFIG.RETRY_ATTEMPTS; attempt++) {
-        try {
-            const result = await fetchStockPrice(symbol);
-            if (result.success) {
-                addRowToTable(symbol, result);
-                return true;
-            }
-            
-            if (attempt < CONFIG.RETRY_ATTEMPTS) {
-                await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY * attempt));
-            }
-        } catch (error) {
-            if (attempt === CONFIG.RETRY_ATTEMPTS) {
-                addRowToTable(symbol, null, true);
-                return false;
-            }
-        }
-    }
-    return false;
-}
-
 async function fetchAllStocks() {
     updateStatusMessage('Fetching stock prices...');
     clearTable();
@@ -228,16 +214,12 @@ async function fetchAllStocks() {
     
     for (const stock of stocks) {
         try {
-            const success = await getStockPriceWithRetry(stock);
-            if (success) {
-                successCount++;
-            } else {
-                failureCount++;
-            }
+            const result = await fetchStockPrice(stock.Name);
+            addRowToTable(stock, result.success ? result : null, !result.success);
+            result.success ? successCount++ : failureCount++;
             await new Promise(resolve => setTimeout(resolve, CONFIG.RATE_LIMIT_DELAY));
         } catch (error) {
             failureCount++;
-            console.error(`Failed to fetch ${stock}:`, error);
         }
     }
     
@@ -247,15 +229,8 @@ async function fetchAllStocks() {
     );
 }
 
-// Event Listeners
-document.getElementById('refreshButton').addEventListener('click', () => {
-    fetchAllStocks();
-});
-
-// Initial load
-document.addEventListener('DOMContentLoaded', () => {
-    fetchAllStocks();
-});
+document.getElementById('refreshButton').addEventListener('click', fetchAllStocks);
+document.addEventListener('DOMContentLoaded', fetchAllStocks);
 </script>
 
 </body>
