@@ -6,6 +6,7 @@
 table {
   border-collapse: collapse;
   width: 100%;
+  margin-bottom: 20px;
 }
 
 th, td {
@@ -20,77 +21,239 @@ th {
   background-color: #4CAF50;
   color: white;
 }
+
+.error-text {
+  color: red;
+}
+
+.price-up {
+  color: green;
+}
+
+.price-down {
+  color: red;
+}
+
+#statusMessage {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.refresh-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.refresh-button:hover {
+  background-color: #45a049;
+}
 </style>
 </head>
 <body>
 
 <h2>Stock Prices</h2>
+<button id="refreshButton" class="refresh-button">Refresh Prices</button>
+<div id="statusMessage"></div>
 
 <table id="stockTable">
   <tr>
-    <th>Company</th>
+    <th>Symbol</th>
     <th>Price</th>
+    <th>Change</th>
+    <th>Volume</th>
+    <th>Last Updated</th>
   </tr>
 </table>
 
 <script>
 const stocks = [
-  "ZOMATOEQN",
-  "SUZLONEQN",
-  "WIPROEQN",
-  "LTHOTELEQN",
-  "MUKKAPROEQN",
-  "NTPCGREENEQN",
-  "IRFCEQN",
-  "IOCEQN",
-  "BATAINDIAEQN",
-  "EQUITASEQN",
-  "NHPCEQN",
-  "CPSEETFEQN",
-  "ALSTONEQN",
-  "UCOBANKEQN",
-  "NTPCEQN", 
-  "CANBKEQN",
-  "CDSLEQN",
-  "CASTROLEQN",
-  "IRBEQN",
-  "IFCIEQN",
-  "EASEMYTRIPEQN",
-  "EXIDEINDEQN"
+    "ZOMATO.NS",  
+"SUZLON.NS",  
+"WIPRO.NS",  
+ "EXIDEIND.NS", 
+ "IFCI.NS",
+"MUKKA.NS",  
+"NTPCGREEN.NS",  
+"IRFC.NS",  
+"IOC.NS",  
+"BATAINDIA.NS",  
+"EASEMYTRIP.NS", 
+"EQUITASBNK.NS",
+"NHPC.NS",  
+"CPSEETF.NS",  
+"ALSTONE.BO",  
+"UCOBANK.NS",  
+"NTPC.NS",  
+"CANBK.NS",  
+"CDSL.NS",  
+"LEMONTREE.NS" ,
+"CASTROLIND.NS",
+"IRB.NS"
+
 ];
 
-const table = document.getElementById("stockTable");
+const CONFIG = {
+    RETRY_ATTEMPTS: 3,
+    RETRY_DELAY: 1000,
+    RATE_LIMIT_DELAY: 500
+};
 
-function getStockPrice(symbol) {
-  const url = `https://www.nseindia.com/api/chart-databyindex-dynamic?index=${symbol}&type=symbol`;
-//https://www.nseindia.com/api/chart-databyindex-dynamic?index=NMDCEQN&type=symbol
-  fetch(url)
-    .then(response => response.text())
-    .then(data => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(data, 'text/html');
-      const priceElement = doc.querySelector('.My(6px) Fw(b) D(ib) Mend(8px)').textContent;
-      return priceElement;
-    })
-    .then(price => {
-      const newRow = table.insertRow();
-      const cell1 = newRow.insertCell(0);
-      const cell2 = newRow.insertCell(1);
-      cell1.textContent = symbol.replace(".NS", "");
-      cell2.textContent = price;
-    })
-    .catch(error => {
-      console.error(`Error fetching data for ${symbol}:`, error);
-      const newRow = table.insertRow();
-      const cell1 = newRow.insertCell(0);
-      const cell2 = newRow.insertCell(1);
-      cell1.textContent = symbol.replace(".NS", "");
-      cell2.textContent = "N/A"; 
-    });
+function updateStatusMessage(message, isError = false) {
+    const statusDiv = document.getElementById('statusMessage');
+    statusDiv.textContent = message;
+    statusDiv.style.backgroundColor = isError ? '#ffebee' : '#e8f5e9';
+    statusDiv.style.color = isError ? '#c62828' : '#2e7d32';
 }
 
-stocks.forEach(stock => {
-  getStockPrice(stock);
+function formatDateTime(date) {
+    return date.toLocaleString();
+}
+
+function formatNumber(num) {
+    return new Intl.NumberFormat('en-IN').format(num);
+}
+
+function clearTable() {
+    const table = document.getElementById('stockTable');
+    while (table.rows.length > 1) {
+        table.deleteRow(1);
+    }
+}
+
+function addRowToTable(symbol, data, isError = false) {
+    const table = document.getElementById("stockTable");
+    const newRow = table.insertRow();
+    
+    // Symbol
+    const cell1 = newRow.insertCell(0);
+    cell1.textContent = symbol.split('.')[0];
+    
+    if (!isError && data) {
+        // Price
+        const cell2 = newRow.insertCell(1);
+        cell2.textContent = `₹${parseFloat(data.price).toFixed(2)}`;
+        
+        // Change
+        const cell3 = newRow.insertCell(2);
+        const changePercent = parseFloat(data.changePercent);
+        cell3.textContent = `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`;
+        cell3.className = changePercent >= 0 ? 'price-up' : 'price-down';
+        
+        // Volume
+        const cell4 = newRow.insertCell(3);
+        cell4.textContent = formatNumber(data.volume);
+    } else {
+        const cell2 = newRow.insertCell(1);
+        const cell3 = newRow.insertCell(2);
+        const cell4 = newRow.insertCell(3);
+        cell2.textContent = 'N/A';
+        cell3.textContent = 'N/A';
+        cell4.textContent = 'N/A';
+        cell2.className = 'error-text';
+    }
+    
+    // Last Updated
+    const cell5 = newRow.insertCell(4);
+    cell5.textContent = formatDateTime(new Date());
+}
+
+async function fetchStockPrice(symbol) {
+    // Using Yahoo Finance API
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
+    
+    try {
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.chart.result && data.chart.result[0]) {
+            const quote = data.chart.result[0].meta;
+            const indicators = data.chart.result[0].indicators.quote[0];
+            
+            return {
+                price: quote.regularMarketPrice,
+                changePercent: quote.regularMarketChangePercent,
+                volume: quote.regularMarketVolume,
+                success: true
+            };
+        } else {
+            throw new Error('Invalid API response');
+        }
+        
+    } catch (error) {
+        console.error(`Error fetching data for ${symbol}:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+async function getStockPriceWithRetry(symbol) {
+    for (let attempt = 1; attempt <= CONFIG.RETRY_ATTEMPTS; attempt++) {
+        try {
+            const result = await fetchStockPrice(symbol);
+            if (result.success) {
+                addRowToTable(symbol, result);
+                return true;
+            }
+            
+            if (attempt < CONFIG.RETRY_ATTEMPTS) {
+                await new Promise(resolve => setTimeout(resolve, CONFIG.RETRY_DELAY * attempt));
+            }
+        } catch (error) {
+            if (attempt === CONFIG.RETRY_ATTEMPTS) {
+                addRowToTable(symbol, null, true);
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
+async function fetchAllStocks() {
+    updateStatusMessage('Fetching stock prices...');
+    clearTable();
+    
+    let successCount = 0;
+    let failureCount = 0;
+    
+    for (const stock of stocks) {
+        try {
+            const success = await getStockPriceWithRetry(stock);
+            if (success) {
+                successCount++;
+            } else {
+                failureCount++;
+            }
+            await new Promise(resolve => setTimeout(resolve, CONFIG.RATE_LIMIT_DELAY));
+        } catch (error) {
+            failureCount++;
+            console.error(`Failed to fetch ${stock}:`, error);
+        }
+    }
+    
+    updateStatusMessage(
+        `Completed: ${successCount} successful, ${failureCount} failed`,
+        failureCount > 0
+    );
+}
+
+// Event Listeners
+document.getElementById('refreshButton').addEventListener('click', () => {
+    fetchAllStocks();
+});
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+    fetchAllStocks();
 });
 </script>
 
