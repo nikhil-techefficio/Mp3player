@@ -57,9 +57,9 @@ th {
   font-weight: bold;
   margin-top: 20px;
   background: darkgray;
-    padding: 6px;
-    text-align: center;
-    border-radius: 5px;
+  padding: 6px;
+  text-align: center;
+  border-radius: 5px;
 }
 </style>
 </head>
@@ -74,6 +74,8 @@ th {
   <tr>
     <th>Symbol</th>
     <th>Price</th>
+    <th>Sector</th>
+    <th>CAP</th>
     <th>Purchased At</th>
     <th>Volume Purchased</th>
     <th>Invested Amount</th>
@@ -91,30 +93,31 @@ th {
 </div>
 
 <script>
-const stocks =  [
-    { "Name": "ZOMATO.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "SUZLON.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "WIPRO.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "EXIDEIND.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "IFCI.NS","Purchased": "173", "Volume": "70" },
-    { "Name": "MUKKA.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "NTPCGREEN.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "IRFC.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "IOC.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "BATAINDIA.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "EASEMYTRIP.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "EQUITASBNK.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "NHPC.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "CPSEETF.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "ALSTONE.BO", "Purchased": "173", "Volume": "70" },
-    { "Name": "UCOBANK.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "NTPC.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "CANBK.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "CDSL.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "LEMONTREE.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "CASTROLIND.NS", "Purchased": "173", "Volume": "70" },
-    { "Name": "IRB.NS", "Purchased": "173", "Volume": "70" }
+const stocks = [
+    { "Name": "ZOMATO.NS", "Purchased": "173", "Volume": "70", "Sector": "Technology", "CAP": "Large" },
+    { "Name": "SUZLON.NS", "Purchased": "173", "Volume": "70", "Sector": "Energy", "CAP": "Mid" },
+    { "Name": "WIPRO.NS", "Purchased": "173", "Volume": "70", "Sector": "IT", "CAP": "Large" },
+    { "Name": "EXIDEIND.NS", "Purchased": "173", "Volume": "70", "Sector": "Automobile", "CAP": "Mid" },
+    { "Name": "IFCI.NS", "Purchased": "173", "Volume": "70", "Sector": "Finance", "CAP": "Small" },
+    { "Name": "MUKKA.NS", "Purchased": "173", "Volume": "70", "Sector": "Food Processing", "CAP": "Small" },
+    { "Name": "NTPCGREEN.NS", "Purchased": "173", "Volume": "70", "Sector": "Energy", "CAP": "Mid" },
+    { "Name": "IRFC.NS", "Purchased": "173", "Volume": "70", "Sector": "Finance", "CAP": "Large" },
+    { "Name": "IOC.NS", "Purchased": "173", "Volume": "70", "Sector": "Oil & Gas", "CAP": "Large" },
+    { "Name": "BATAINDIA.NS", "Purchased": "173", "Volume": "70", "Sector": "Retail", "CAP": "Mid" },
+    { "Name": "EASEMYTRIP.NS", "Purchased": "173", "Volume": "70", "Sector": "Travel", "CAP": "Mid" },
+    { "Name": "EQUITASBNK.NS", "Purchased": "173", "Volume": "70", "Sector": "Banking", "CAP": "Mid" },
+    { "Name": "NHPC.NS", "Purchased": "173", "Volume": "70", "Sector": "Power", "CAP": "Mid" },
+    { "Name": "CPSEETF.NS", "Purchased": "173", "Volume": "70", "Sector": "ETF", "CAP": "Large" },
+    { "Name": "ALSTONE.BO", "Purchased": "173", "Volume": "70", "Sector": "Construction", "CAP": "Small" },
+    { "Name": "UCOBANK.NS", "Purchased": "173", "Volume": "70", "Sector": "Banking", "CAP": "Mid" },
+    { "Name": "NTPC.NS", "Purchased": "173", "Volume": "70", "Sector": "Power", "CAP": "Large" },
+    { "Name": "CANBK.NS", "Purchased": "173", "Volume": "70", "Sector": "Banking", "CAP": "Large" },
+    { "Name": "CDSL.NS", "Purchased": "173", "Volume": "70", "Sector": "Finance", "CAP": "Mid" },
+    { "Name": "LEMONTREE.NS", "Purchased": "173", "Volume": "70", "Sector": "Hospitality", "CAP": "Mid" },
+    { "Name": "CASTROLIND.NS", "Purchased": "173", "Volume": "70", "Sector": "Oil & Lubricants", "CAP": "Mid" },
+    { "Name": "IRB.NS", "Purchased": "173", "Volume": "70", "Sector": "Infrastructure", "CAP": "Mid" }
 ];
+
 
 const CONFIG = {
     RETRY_ATTEMPTS: 3,
@@ -151,8 +154,8 @@ function updateSummary() {
     document.querySelectorAll("#stockTable tr").forEach((row, index) => {
         if (index === 0) return;
 
-        let purchasedAt = parseFloat(row.cells[2].textContent) || 0;
-        let volume = parseFloat(row.cells[3].textContent) || 0;
+        let purchasedAt = parseFloat(row.cells[4].textContent) || 0;
+        let volume = parseFloat(row.cells[5].textContent) || 0;
         let currentPrice = parseFloat(row.cells[1].textContent.replace("₹", "")) || 0;
 
         let investedAmount = purchasedAt * volume;
@@ -162,10 +165,10 @@ function updateSummary() {
         totalInvested += investedAmount;
         totalCurrent += currentAmount;
 
-        row.cells[4].textContent = `₹${formatNumber(investedAmount)}`;
-        row.cells[5].textContent = `₹${formatNumber(currentAmount)}`;
-        row.cells[6].textContent = `₹${formatNumber(profitLoss)}`;
-        row.cells[6].style.color = profitLoss >= 0 ? "green" : "red";
+        row.cells[6].textContent = `₹${formatNumber(investedAmount)}`;
+        row.cells[7].textContent = `₹${formatNumber(currentAmount)}`;
+        row.cells[8].textContent = `₹${formatNumber(profitLoss)}`;
+        row.cells[8].style.color = profitLoss >= 0 ? "green" : "red";
     });
 
     document.getElementById("totalInvested").textContent = formatNumber(totalInvested);
@@ -188,21 +191,29 @@ function addRowToTable(stock, data, isError = false) {
     const priceCell = newRow.insertCell(1);
     priceCell.textContent = !isError && data ? `₹${parseFloat(data.price).toFixed(2)}` : "N/A";
 
-    const purchasedCell = newRow.insertCell(2);
+    const sectorCell = newRow.insertCell(2);
+    sectorCell.textContent = stock.Sector || "Enter Sector";
+    makeCellEditable(sectorCell);
+
+    const capCell = newRow.insertCell(3);
+    capCell.textContent = stock.CAP || "Enter CAP";
+    makeCellEditable(capCell);
+
+    const purchasedCell = newRow.insertCell(4);
     purchasedCell.textContent = stock.Purchased || "Enter Price";
     makeCellEditable(purchasedCell);
 
-    const volumeCell = newRow.insertCell(3);
+    const volumeCell = newRow.insertCell(5);
     volumeCell.textContent = stock.Volume || "Enter Volume";
     makeCellEditable(volumeCell);
 
-    newRow.insertCell(4).textContent = "₹0"; // Invested Amount
-    newRow.insertCell(5).textContent = "₹0"; // Current Amount
-    newRow.insertCell(6).textContent = "₹0"; // Profit/Loss
+    newRow.insertCell(6).textContent = "₹0"; // Invested Amount
+    newRow.insertCell(7).textContent = "₹0"; // Current Amount
+    newRow.insertCell(8).textContent = "₹0"; // Profit/Loss
 
-    newRow.insertCell(7).textContent = !isError && data ? formatNumber(data.volume) : "N/A";
+    newRow.insertCell(9).textContent = !isError && data ? formatNumber(data.volume) : "N/A";
 
-    newRow.insertCell(8).textContent = formatDateTime(new Date());
+    newRow.insertCell(10).textContent = formatDateTime(new Date());
 }
 
 async function fetchStockPrice(symbol) {
